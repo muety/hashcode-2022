@@ -45,7 +45,7 @@ public class Main {
         // Simulate
         final var topProjects = projects.stream()
                 .sorted(projectScoring)
-                .collect(Collectors.toList());
+                .toList();
         final LinkedList<Project> pending = topProjects.stream()
                 .filter(p -> !p.done())
                 .collect(Collectors.toCollection(LinkedList::new));
@@ -127,16 +127,16 @@ public class Main {
             final var parts = scanner.nextLine().split(" ");
 
             switch (mode) {
-                case DEFAULT:
+                case DEFAULT -> {
                     n = Integer.parseInt(parts[0]);
                     m = Integer.parseInt(parts[1]);
                     mode = PARSE_MODE.CONTRIBUTOR;
-                    break;
-                case CONTRIBUTOR:
+                }
+                case CONTRIBUTOR -> {
                     contributors.add(new Contributor(parts[0], Integer.parseInt(parts[1]), new HashSet<>()));
                     mode = PARSE_MODE.SKILL;
-                    break;
-                case PROJECT:
+                }
+                case PROJECT -> {
                     projects.add(new Project(
                             Integer.parseInt(parts[1]),
                             Integer.parseInt(parts[2]),
@@ -146,23 +146,23 @@ public class Main {
                             new ArrayList<>()
                     ));
                     mode = PARSE_MODE.ROLE;
-                    break;
-                case SKILL:
+                }
+                case SKILL -> {
                     final var skill = new Skill(parts[0], Integer.parseInt(parts[1]));
                     final var contributor = contributors.getLast();
                     contributor.skills.add(skill);
                     if (contributor.skills.size() == contributor.numSkills) {
                         mode = contributors.size() == n ? PARSE_MODE.PROJECT : PARSE_MODE.CONTRIBUTOR;
                     }
-                    break;
-                case ROLE:
+                }
+                case ROLE -> {
                     final var requirement = new Skill(parts[0], Integer.parseInt(parts[1]));
                     final var project = projects.getLast();
                     project.roles.add(requirement);
                     if (project.roles.size() == project.numRoles) {
                         mode = PARSE_MODE.PROJECT;
                     }
-                    break;
+                }
             }
         }
 
@@ -172,7 +172,7 @@ public class Main {
         var planned = projects.stream()
                 .filter(Project::done)
                 .sorted(Comparator.comparing(p -> p.startedAt))
-                .collect(Collectors.toList());
+                .toList();
 
         System.out.println(planned.size());
 
@@ -236,7 +236,7 @@ public class Main {
         final var available = contributors.stream()
                 .filter(Contributor::isBusy)
                 .filter(c -> c.currentProject.startedAt + c.currentProject.duration <= currentTime)
-                .collect(Collectors.toUnmodifiableList());
+                .toList();
         available.forEach(c -> {
             // conditionally level up skill
             c.skills.stream()
@@ -252,7 +252,7 @@ public class Main {
 // --- //
 
     enum PARSE_MODE {
-        DEFAULT, CONTRIBUTOR, SKILL, PROJECT, ROLE;
+        DEFAULT, CONTRIBUTOR, SKILL, PROJECT, ROLE
     }
 
     static class Contributor {
