@@ -9,9 +9,9 @@ import java.util.stream.IntStream;
 // TODO: multi-threading
 
 public class Main {
-    private static final int INCREMENT = 50;
-    private static final float SKIP_FACTOR = 0.05f;
-    private static final float BREAK_FACTOR = 0.1f;
+    private static final int INCREMENT = 1;
+    private static final float SKIP_FACTOR = 0.0f;
+    private static final float BREAK_FACTOR = 1.0f;
 
     private static final LinkedList<Contributor> contributors = new LinkedList<>();
     private static final LinkedList<Project> projects = new LinkedList<>();
@@ -29,11 +29,12 @@ public class Main {
         printStats();
 
         // Vars
-        final var maxTime = projects.stream().mapToInt(p -> p.duration).sum();
+        final var totalTime = projects.stream().mapToInt(p -> p.duration).sum();
         final var maxScore = projects.stream().mapToInt(p -> p.score).max().getAsInt();
         final var maxRoles = projects.stream().mapToInt(p -> p.roles.size()).max().getAsInt();
         final var maxDeadline = projects.stream().mapToInt(p -> p.deadline).max().getAsInt();
 
+        // equally consider a project's reward, the number of different required roles and its deadline
         final Comparator<Project> projectScoring = Comparator.comparing(p -> {
             var score = ((float) p.score) / maxScore;
             score *= ((float) p.roles.size()) / maxRoles;
@@ -52,7 +53,7 @@ public class Main {
         final AtomicInteger logCount = new AtomicInteger(0);
         final AtomicInteger noChangesCount = new AtomicInteger(0);
 
-        for (int t = 0; t < maxTime; t += INCREMENT) {
+        for (int t = 0; t < totalTime; t += INCREMENT) {
             final int currentTime = t;
             logCount.incrementAndGet();
 
@@ -73,7 +74,7 @@ public class Main {
             }
 
             // Abort if no changes for sufficiently long
-            if (t > 0 && noChangesCount.get() >= maxTime * BREAK_FACTOR) {
+            if (t > 0 && noChangesCount.get() >= totalTime * BREAK_FACTOR) {
                 break;
             }
 
@@ -92,7 +93,7 @@ public class Main {
                 System.err.printf(
                         "[t=%d] [%.1f %%] [%.1f %% done] [%.1f %% free] Score: %d%n",
                         t + 1,
-                        (((float) t + 1) / ((float) maxTime)) * 100,
+                        (((float) t + 1) / ((float) totalTime)) * 100,
                         ((float) projects.size() - pending.size()) / ((float) projects.size()) * 100,
                         ((float) numAvailable) / ((float) contributors.size()) * 100,
                         evaluate()
