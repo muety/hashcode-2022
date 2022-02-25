@@ -5,6 +5,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+// TODO: consider mentoring (currently disregarded entirely)
+// TODO: multi-threading
+
 public class Main {
     private static final int INCREMENT = 50;
     private static final float SKIP_FACTOR = 0.05f;
@@ -77,8 +80,8 @@ public class Main {
             noChangesCount.incrementAndGet();
 
             pending.removeAll(pending.stream()
-                    .filter(p -> p.deadline <= currentTime)
-                    .filter(p -> p.duration + currentTime > p.deadline + p.score)
+                    .filter(p -> p.deadline <= currentTime) // skip expired projects
+                    .filter(p -> p.duration + currentTime > p.deadline + p.score) // skip projects that will result in penalty
                     .collect(Collectors.toCollection(LinkedList::new)));
 
             if (pending.isEmpty()) {
@@ -196,6 +199,7 @@ public class Main {
                 .sum();
     }
 
+    // inplace!
     private static void staffProject(Project project, int currentTime) {
         final var pool = contributors.stream()
                 .filter(Contributor::isAvailable)
@@ -205,8 +209,8 @@ public class Main {
             final var role = project.roles.get(i);
             final var index = i;
             pool.stream()
-                    // Find someone who has preferably exactly the right skill or is a bit overskilled
                     .filter(c -> c.skills.stream().anyMatch(s -> s.name.equals(role.name) && s.level >= role.level))
+                    // find someone who has preferably exactly the right skill or is a bit overskilled
                     .min(Comparator.comparing(c -> Math.abs(c.skills.stream()
                             .filter(s -> s.name.equals(role.name))
                             .findFirst()
@@ -227,18 +231,19 @@ public class Main {
     }
 
     private static int updateContributors(int currentTime) {
+        // find all people with a project that ends at the current time step
         final var available = contributors.stream()
                 .filter(Contributor::isBusy)
                 .filter(c -> c.currentProject.startedAt + c.currentProject.duration <= currentTime)
                 .collect(Collectors.toUnmodifiableList());
         available.forEach(c -> {
-            // skill up
+            // conditionally level up skill
             c.skills.stream()
                     .filter(s -> s.name.equals(c.currentRole.name))
                     .filter(s -> s.level <= c.currentRole.level)
                     .findFirst()
                     .ifPresent(s -> s.level++);
-            c.clear();
+            c.clear(); // free 'em
         });
         return available.size();
     }
